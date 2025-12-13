@@ -238,6 +238,20 @@ app.get('/api/candidates', (req, res) => {
     res.json(candidates);
 });
 
+// Export Excel - MUST be before :id route
+app.get('/api/candidates/export', (req, res) => {
+    const candidates = db.prepare('SELECT * FROM candidates').all();
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(candidates);
+    XLSX.utils.book_append_sheet(wb, ws, 'Candidates');
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename="candidates_export.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+});
+
 // Get Single Candidate
 app.get('/api/candidates/:id', (req, res) => {
     const candidate = db.prepare('SELECT * FROM candidates WHERE id = ?').get(req.params.id);

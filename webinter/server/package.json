@@ -7,9 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Sai Kumar and Team",
+  "license": "UNLICENSED",
+  "description": "Internship Management System - Backend API Server",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.5.0",

@@ -542,11 +542,14 @@ If you encounter issues:
 
 ## 📄 License
 
-This project is developed for internal use by RG organization.
+This project is developed and owned by **Sai Kumar and Team**.
+All rights reserved © 2024 Sai Kumar and Team.
 
 ---
 
 ## 🙏 Credits
+
+**Developed by:** Sai Kumar and Team
 
 **Built with love using:**
 - React & Vite for blazing-fast frontend
@@ -558,7 +561,7 @@ This project is developed for internal use by RG organization.
 
 **Version:** 3.0  
 **Last Updated:** December 2024  
-**Maintained by:** RG IT Team
+**Developed & Maintained by:** Sai Kumar and Team
 
 ---
 
