@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AddCandidate from './pages/AddCandidate';
@@ -20,9 +20,9 @@ const ProtectedLayout = () => {
         <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>RG INTERNSHIP MANAGEMENT</div>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <span>Welcome, {user.username}</span>
-          <a href="/analytics" style={{ color: 'var(--text-muted)' }}>Analytics</a>
-          <a href="/add" style={{ color: 'var(--text-muted)' }}>Add Candidate</a>
-          <a href="/change-password" style={{ color: 'var(--text-muted)' }}>Change Password</a>
+          <Link to="/analytics" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Analytics</Link>
+          <Link to="/add" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Add Candidate</Link>
+          <Link to="/change-password" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Change Password</Link>
           <button
             className="btn btn-secondary"
             style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
