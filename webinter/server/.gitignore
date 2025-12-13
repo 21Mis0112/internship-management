@@ -1,5 +1,39 @@
+# Dependencies
 node_modules/
-uploads/
+
+# Database files (contains user data - never commit!)
+*.db
 *.db-shm
 *.db-wal
+*.sqlite
+*.sqlite3
+
+# Uploads directory (contains user files)
+uploads/
+
+# Environment variables (contains secrets)
 .env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
