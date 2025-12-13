@@ -17,7 +17,7 @@ const ProtectedLayout = () => {
   return (
     <div className="app-container">
       <nav className="glass-panel" style={{ borderRadius: 0, borderTop: 0, borderLeft: 0, borderRight: 0, marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>RG INTERNSHIP MANAGEMENT</div>
+        <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>RNPAIL</div>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <span>Welcome, {user.username}</span>
           <Link to="/analytics" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Analytics</Link>
