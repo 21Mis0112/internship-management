@@ -96,6 +96,25 @@ const upload = multer({ dest: 'uploads/' });
 
 // Routes
 
+// Root endpoint - API status
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Internship Management System API',
+        status: 'running',
+        version: '3.0',
+        endpoints: {
+            auth: '/api/auth/login',
+            candidates: '/api/candidates',
+            analytics: '/api/analytics'
+        }
+    });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Auth
 app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
