@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, Link, useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AddCandidate from './pages/AddCandidate';
@@ -9,10 +9,17 @@ import Analytics from './pages/Analytics';
 const ProtectedLayout = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const navigate = useNavigate();
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="app-container">
@@ -26,10 +33,7 @@ const ProtectedLayout = () => {
           <button
             className="btn btn-secondary"
             style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
-            onClick={() => {
-              localStorage.removeItem('token');
-              window.location.href = '/login';
-            }}
+            onClick={handleLogout}
           >
             Logout
           </button>
