@@ -92,19 +92,30 @@ export async function syncDataFromExcel(db) {
             return newRow;
         });
 
-        // Clear and insert
-        db.prepare('DELETE FROM candidates').run();
-        console.log('🗑️  Cleared existing data');
+        // Smart merge: Only delete sheet entries, preserve manual ones
+        db.prepare('DELETE FROM candidates WHERE source = "sheet"').run();
+        console.log('🗑️  Cleared sheet-sourced data (preserving manual entries)');
 
-        const stmt = db.prepare(`
-            INSERT OR REPLACE INTO candidates (
+        const insertStmt = db.prepare(`
+            INSERT INTO candidates (
                 intern_id, name, college, department, year, start_date, end_date,
-                phone, email, status, mentor, referred_by, qualification
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                phone, email, status, mentor, referred_by, qualification, source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "sheet")
         `);
 
+        const updateStmt = db.prepare(`
+            UPDATE candidates SET 
+                name=?, college=?, department=?, year=?, start_date=?, end_date=?,
+                phone=?, email=?, status=?, mentor=?, referred_by=?, qualification=?
+            WHERE intern_id=? AND source="sheet"
+        `);
+
+        const checkStmt = db.prepare('SELECT source FROM candidates WHERE intern_id = ?');
+
         const insertMany = db.transaction((candidates) => {
-            let count = 0;
+            let addedCount = 0;
+            let skippedCount = 0;
+
             for (const c of candidates) {
                 const excelDate = (val) => {
                     if (!val) return "";
@@ -145,16 +156,29 @@ export async function syncDataFromExcel(db) {
                 const qual = getVal(['qualification', 'qual']);
 
                 if (internId && name) {
-                    stmt.run(internId, name, college, dept, year, start, end, phone, email, status, mentor, ref, qual);
-                    count++;
+                    // Check if this intern_id exists
+                    const existing = checkStmt.get(internId);
+
+                    if (existing && existing.source === 'manual') {
+                        // Skip - preserve manual entry
+                        skippedCount++;
+                        continue;
+                    }
+
+                    // Insert from sheet
+                    insertStmt.run(internId, name, college, dept, year, start, end, phone, email, status, mentor, ref, qual);
+                    addedCount++;
                 }
             }
-            return count;
+            return { added: addedCount, skipped: skippedCount };
         });
 
-        const count = insertMany(normalized);
-        console.log(`✅ Successfully synced ${count} candidates`);
-        return count;
+        const result = insertMany(normalized);
+        console.log(`✅ Successfully synced ${result.added} candidates from sheet`);
+        if (result.skipped > 0) {
+            console.log(`⏭️  Skipped ${result.skipped} manual entries (preserved)`);
+        }
+        return result.added;
 
     } catch (error) {
         console.error('❌ Sync failed:', error.message);

@@ -85,6 +85,17 @@ const initDb = () => {
     } catch (err) {
         // Column likely already exists
     }
+
+    // Add source column for smart sync (manual vs sheet)
+    try {
+        db.prepare('ALTER TABLE candidates ADD COLUMN source TEXT DEFAULT "manual"').run();
+        console.log('Added source column to candidates table');
+        // Mark existing records as from sheet
+        db.prepare('UPDATE candidates SET source = "sheet" WHERE source IS NULL').run();
+        console.log('Updated existing candidates with source=sheet');
+    } catch (err) {
+        // Column likely already exists
+    }
 };
 
 initDb();
@@ -316,9 +327,9 @@ app.post('/api/candidates', (req, res) => {
         const stmt = db.prepare(`
       INSERT INTO candidates (
         intern_id, name, college, department, year, start_date, end_date, 
-        phone, email, status, mentor, referred_by, qualification
+        phone, email, status, mentor, referred_by, qualification, source
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual')
     `);
         // Convert empty string to null for intern_id to avoid UNIQUE constraint issues
         const finalInternId = intern_id && intern_id.trim() !== '' ? intern_id : null;
@@ -375,9 +386,9 @@ app.post('/api/candidates/upload', upload.single('file'), (req, res) => {
         const stmt = db.prepare(`
       INSERT INTO candidates (
         intern_id, name, college, department, year, start_date, end_date, 
-        phone, email, status, mentor, referred_by, qualification
+        phone, email, status, mentor, referred_by, qualification, source
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sheet')
       ON CONFLICT(intern_id) DO UPDATE SET
         name=excluded.name,
         college=excluded.college,
@@ -390,7 +401,8 @@ app.post('/api/candidates/upload', upload.single('file'), (req, res) => {
         status=excluded.status,
         mentor=excluded.mentor,
         referred_by=excluded.referred_by,
-        qualification=excluded.qualification
+        qualification=excluded.qualification,
+        source='sheet'
     `);
 
         const insertMany = db.transaction((candidates) => {
