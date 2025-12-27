@@ -24,25 +24,40 @@ async function downloadExcelFile(url) {
 
     // Convert OneDrive share link to direct download link
     let downloadUrl = url;
-    if (url.includes('onedrive.live.com') || url.includes('1drv.ms')) {
-        // Convert to direct download URL
+
+    console.log('📥 Processing OneDrive link:', url);
+
+    if (url.includes('1drv.ms')) {
+        // For short links, convert to embed download format
+        // https://1drv.ms/x/... → needs to be expanded and downloaded
+        downloadUrl = url.replace('/x/', '/download/');
+        if (!downloadUrl.includes('download=1')) {
+            downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'download=1';
+        }
+    } else if (url.includes('onedrive.live.com')) {
+        // For full links
         downloadUrl = url.replace('view.aspx', 'download.aspx');
+        downloadUrl = downloadUrl.replace('edit.aspx', 'download.aspx');
         if (!downloadUrl.includes('download=1')) {
             downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'download=1';
         }
     }
 
     return new Promise((resolve, reject) => {
-        console.log('📥 Downloading Excel file from OneDrive...');
+        console.log('📥 Downloading from:', downloadUrl);
 
         https.get(downloadUrl, (response) => {
+            console.log('Response status:', response.statusCode);
+
             if (response.statusCode === 302 || response.statusCode === 301) {
                 // Follow redirect
+                console.log('Following redirect to:', response.headers.location);
                 https.get(response.headers.location, (redirectResponse) => {
                     const chunks = [];
                     redirectResponse.on('data', chunk => chunks.push(chunk));
                     redirectResponse.on('end', () => {
                         const buffer = Buffer.concat(chunks);
+                        console.log('✅ Downloaded', buffer.length, 'bytes');
                         resolve(buffer);
                     });
                 }).on('error', reject);
@@ -51,10 +66,14 @@ async function downloadExcelFile(url) {
                 response.on('data', chunk => chunks.push(chunk));
                 response.on('end', () => {
                     const buffer = Buffer.concat(chunks);
+                    console.log('✅ Downloaded', buffer.length, 'bytes');
                     resolve(buffer);
                 });
             }
-        }).on('error', reject);
+        }).on('error', (err) => {
+            console.error('Download error:', err.message);
+            reject(err);
+        });
     });
 }
 
