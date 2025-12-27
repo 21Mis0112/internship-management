@@ -93,21 +93,21 @@ export async function syncDataFromExcel(db) {
         });
 
         // Smart merge: Only delete sheet entries, preserve manual ones
-        db.prepare('DELETE FROM candidates WHERE source = "sheet"').run();
+        db.prepare("DELETE FROM candidates WHERE source = 'sheet'").run();
         console.log('🗑️  Cleared sheet-sourced data (preserving manual entries)');
 
         const insertStmt = db.prepare(`
             INSERT INTO candidates (
                 intern_id, name, college, department, year, start_date, end_date,
                 phone, email, status, mentor, referred_by, qualification, source
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "sheet")
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sheet')
         `);
 
         const updateStmt = db.prepare(`
             UPDATE candidates SET 
                 name=?, college=?, department=?, year=?, start_date=?, end_date=?,
                 phone=?, email=?, status=?, mentor=?, referred_by=?, qualification=?
-            WHERE intern_id=? AND source="sheet"
+            WHERE intern_id=? AND source='sheet'
         `);
 
         const checkStmt = db.prepare('SELECT source FROM candidates WHERE intern_id = ?');
