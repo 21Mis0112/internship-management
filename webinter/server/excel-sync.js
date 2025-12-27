@@ -97,7 +97,7 @@ export async function syncDataFromExcel(db) {
         console.log('🗑️  Cleared existing data');
 
         const stmt = db.prepare(`
-            INSERT INTO candidates (
+            INSERT OR REPLACE INTO candidates (
                 intern_id, name, college, department, year, start_date, end_date,
                 phone, email, status, mentor, referred_by, qualification
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
