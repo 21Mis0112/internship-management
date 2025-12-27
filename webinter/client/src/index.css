@@ -1,15 +1,17 @@
 :root {
-  --primary: #6366f1;
-  /* Indigo 500 */
-  --primary-hover: #4f46e5;
-  --secondary: #ec4899;
-  /* Pink 500 */
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-hover: rgba(255, 255, 255, 0.1);
-  --border: rgba(255, 255, 255, 0.1);
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
+  --primary: #1e40af;
+  /* Navy Blue 700 */
+  --primary-hover: #1e3a8a;
+  /* Navy Blue 800 */
+  --secondary: #3b82f6;
+  /* Blue 500 */
+  --bg-gradient: linear-gradient(135deg, #0c1e47 0%, #1e3a8a 100%);
+  /* Navy blue gradient */
+  --surface: rgba(255, 255, 255, 0.08);
+  --surface-hover: rgba(255, 255, 255, 0.15);
+  --border: rgba(255, 255, 255, 0.2);
+  --text-main: #ffffff;
+  --text-muted: #cbd5e1;
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #ef4444;
