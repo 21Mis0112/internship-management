@@ -8,6 +8,7 @@ import { createRequire } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { setupAutoSync } from './excel-sync.js';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
@@ -87,6 +88,9 @@ const initDb = () => {
 };
 
 initDb();
+
+// Set up Excel auto-sync (syncs on startup and every 5 minutes)
+setupAutoSync(db);
 
 // Ensure uploads directory exists
 if (!fs.existsSync('uploads')) {
