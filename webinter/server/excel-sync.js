@@ -92,30 +92,19 @@ export async function syncDataFromExcel(db) {
             return newRow;
         });
 
-        // Smart merge: Only delete sheet entries, preserve manual ones
-        db.prepare("DELETE FROM candidates WHERE source = 'sheet'").run();
-        console.log('🗑️  Cleared sheet-sourced data (preserving manual entries)');
+        // Simple sync: Clear all and insert fresh data from Google Sheets
+        db.prepare('DELETE FROM candidates').run();
+        console.log('🗑️  Cleared existing data');
 
-        const insertStmt = db.prepare(`
+        const stmt = db.prepare(`
             INSERT INTO candidates (
                 intern_id, name, college, department, year, start_date, end_date,
-                phone, email, status, mentor, referred_by, qualification, source
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sheet')
+                phone, email, status, mentor, referred_by, qualification
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
-
-        const updateStmt = db.prepare(`
-            UPDATE candidates SET 
-                name=?, college=?, department=?, year=?, start_date=?, end_date=?,
-                phone=?, email=?, status=?, mentor=?, referred_by=?, qualification=?
-            WHERE intern_id=? AND source='sheet'
-        `);
-
-        const checkStmt = db.prepare('SELECT source FROM candidates WHERE intern_id = ?');
 
         const insertMany = db.transaction((candidates) => {
-            let addedCount = 0;
-            let skippedCount = 0;
-
+            let count = 0;
             for (const c of candidates) {
                 const excelDate = (val) => {
                     if (!val) return "";
@@ -156,29 +145,16 @@ export async function syncDataFromExcel(db) {
                 const qual = getVal(['qualification', 'qual']);
 
                 if (internId && name) {
-                    // Check if this intern_id exists
-                    const existing = checkStmt.get(internId);
-
-                    if (existing && existing.source === 'manual') {
-                        // Skip - preserve manual entry
-                        skippedCount++;
-                        continue;
-                    }
-
-                    // Insert from sheet
-                    insertStmt.run(internId, name, college, dept, year, start, end, phone, email, status, mentor, ref, qual);
-                    addedCount++;
+                    stmt.run(internId, name, college, dept, year, start, end, phone, email, status, mentor, ref, qual);
+                    count++;
                 }
             }
-            return { added: addedCount, skipped: skippedCount };
+            return count;
         });
 
-        const result = insertMany(normalized);
-        console.log(`✅ Successfully synced ${result.added} candidates from sheet`);
-        if (result.skipped > 0) {
-            console.log(`⏭️  Skipped ${result.skipped} manual entries (preserved)`);
-        }
-        return result.added;
+        const count = insertMany(normalized);
+        console.log(`✅ Successfully synced ${count} candidates from Google Sheets`);
+        return count;
 
     } catch (error) {
         console.error('❌ Sync failed:', error.message);
