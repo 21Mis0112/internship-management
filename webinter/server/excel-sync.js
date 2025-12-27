@@ -39,7 +39,8 @@ async function downloadFile(url) {
         https.get(downloadUrl, (response) => {
             console.log('Response status:', response.statusCode);
 
-            if (response.statusCode === 302 || response.statusCode === 301) {
+            // Handle all redirect codes (301, 302, 307, 308)
+            if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
                 console.log('Following redirect...');
                 https.get(response.headers.location, (r) => {
                     const chunks = [];
@@ -59,6 +60,7 @@ async function downloadFile(url) {
                     resolve(buffer);
                 });
             } else {
+                console.error('❌ Unexpected status:', response.statusCode);
                 reject(new Error(`HTTP ${response.statusCode}`));
             }
         }).on('error', reject);
