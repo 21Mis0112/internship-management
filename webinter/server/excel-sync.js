@@ -1,46 +1,36 @@
 import Database from 'better-sqlite3';
 import { createRequire } from 'module';
 import https from 'https';
-import fs from 'fs';
-import path from 'path';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
 
-// ===== CONFIGURATION =====
-// Replace this with your OneDrive Excel file share link
-const EXCEL_FILE_URL = process.env.EXCEL_SYNC_URL || '';
-
-// How often to check for updates (in minutes)
+// Configuration
+const SYNC_URL = process.env.EXCEL_SYNC_URL || '';
 const SYNC_INTERVAL_MINUTES = 5;
 
-// ===== AUTO-SYNC FUNCTIONALITY =====
-
-async function downloadExcelFile(url) {
+async function downloadFile(url) {
     if (!url) {
-        console.log('⚠️  No Excel sync URL configured. Skipping auto-sync.');
+        console.log('⚠️  No sync URL configured.');
         return null;
     }
 
-    // Convert OneDrive share link to direct download link
     let downloadUrl = url;
 
-    console.log('📥 Processing OneDrive link:', url);
+    console.log('📥 Processing sync URL:', url);
 
-    if (url.includes('1drv.ms')) {
-        // For short links, convert to embed download format
-        // https://1drv.ms/x/... → needs to be expanded and downloaded
-        downloadUrl = url.replace('/x/', '/download/');
-        if (!downloadUrl.includes('download=1')) {
-            downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'download=1';
+    // Google Sheets - convert to export URL
+    if (url.includes('docs.google.com/spreadsheets')) {
+        const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) {
+            const spreadsheetId = match[1];
+            downloadUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`;
+            console.log('📊 Google Sheets detected, using export URL');
         }
-    } else if (url.includes('onedrive.live.com')) {
-        // For full links
-        downloadUrl = url.replace('view.aspx', 'download.aspx');
-        downloadUrl = downloadUrl.replace('edit.aspx', 'download.aspx');
-        if (!downloadUrl.includes('download=1')) {
-            downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'download=1';
-        }
+    }
+    // OneDrive
+    else if (url.includes('1drv.ms') || url.includes('onedrive')) {
+        downloadUrl = url + (url.includes('?') ? '&' : '?') + 'download=1';
     }
 
     return new Promise((resolve, reject) => {
@@ -50,18 +40,17 @@ async function downloadExcelFile(url) {
             console.log('Response status:', response.statusCode);
 
             if (response.statusCode === 302 || response.statusCode === 301) {
-                // Follow redirect
-                console.log('Following redirect to:', response.headers.location);
-                https.get(response.headers.location, (redirectResponse) => {
+                console.log('Following redirect...');
+                https.get(response.headers.location, (r) => {
                     const chunks = [];
-                    redirectResponse.on('data', chunk => chunks.push(chunk));
-                    redirectResponse.on('end', () => {
+                    r.on('data', chunk => chunks.push(chunk));
+                    r.on('end', () => {
                         const buffer = Buffer.concat(chunks);
                         console.log('✅ Downloaded', buffer.length, 'bytes');
                         resolve(buffer);
                     });
                 }).on('error', reject);
-            } else {
+            } else if (response.statusCode === 200) {
                 const chunks = [];
                 response.on('data', chunk => chunks.push(chunk));
                 response.on('end', () => {
@@ -69,31 +58,31 @@ async function downloadExcelFile(url) {
                     console.log('✅ Downloaded', buffer.length, 'bytes');
                     resolve(buffer);
                 });
+            } else {
+                reject(new Error(`HTTP ${response.statusCode}`));
             }
-        }).on('error', (err) => {
-            console.error('Download error:', err.message);
-            reject(err);
-        });
+        }).on('error', reject);
     });
 }
 
 export async function syncDataFromExcel(db) {
     try {
-        console.log('🔄 Starting Excel sync...');
+        console.log('🔄 Starting sync...');
 
-        const fileBuffer = await downloadExcelFile(EXCEL_FILE_URL);
-        if (!fileBuffer) return;
+        const buffer = await downloadFile(SYNC_URL);
+        if (!buffer || buffer.length === 0) {
+            console.log('⚠️  No data downloaded');
+            return 0;
+        }
 
-        // Parse Excel file
-        const workbook = XLSX.read(fileBuffer);
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
+        const workbook = XLSX.read(buffer);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-        console.log(`📊 Found ${data.length} rows in Excel file`);
+        console.log(`📊 Found ${data.length} rows`);
 
         // Normalize keys
-        const normalizedData = data.map(row => {
+        const normalized = data.map(row => {
             const newRow = {};
             for (const key of Object.keys(row)) {
                 newRow[key.trim().toLowerCase()] = row[key];
@@ -101,11 +90,10 @@ export async function syncDataFromExcel(db) {
             return newRow;
         });
 
-        // Clear existing candidates
+        // Clear and insert
         db.prepare('DELETE FROM candidates').run();
         console.log('🗑️  Cleared existing data');
 
-        // Insert new data
         const stmt = db.prepare(`
             INSERT INTO candidates (
                 intern_id, name, college, department, year, start_date, end_date,
@@ -114,9 +102,8 @@ export async function syncDataFromExcel(db) {
         `);
 
         const insertMany = db.transaction((candidates) => {
-            let addedCount = 0;
+            let count = 0;
             for (const c of candidates) {
-                // Date converter
                 const excelDate = (val) => {
                     if (!val) return "";
                     if (typeof val === 'number') {
@@ -131,7 +118,6 @@ export async function syncDataFromExcel(db) {
                     return val;
                 };
 
-                // Helper to find value
                 const getVal = (keys) => {
                     for (const key of keys) {
                         if (c[key] !== undefined && c[key] !== "") return c[key];
@@ -147,9 +133,7 @@ export async function syncDataFromExcel(db) {
                 const end = excelDate(getVal(['ending date', 'training to', 'end date']));
 
                 let year = getVal(['year', 'batch']);
-                if (start) {
-                    year = start.split('-')[0];
-                }
+                if (start) year = start.split('-')[0];
 
                 const phone = getVal(['phone no', 'phone', 'contact no']);
                 const email = getVal(['mail id', 'email', 'email id']);
@@ -160,25 +144,25 @@ export async function syncDataFromExcel(db) {
 
                 if (internId && name) {
                     stmt.run(internId, name, college, dept, year, start, end, phone, email, status, mentor, ref, qual);
-                    addedCount++;
+                    count++;
                 }
             }
-            return addedCount;
+            return count;
         });
 
-        const count = insertMany(normalizedData);
-        console.log(`✅ Successfully synced ${count} candidates from Excel`);
+        const count = insertMany(normalized);
+        console.log(`✅ Successfully synced ${count} candidates`);
         return count;
 
     } catch (error) {
-        console.error('❌ Excel sync failed:', error.message);
+        console.error('❌ Sync failed:', error.message);
         return 0;
     }
 }
 
 export function setupAutoSync(db) {
-    if (!EXCEL_FILE_URL) {
-        console.log('ℹ️  Excel auto-sync disabled. Set EXCEL_SYNC_URL to enable.');
+    if (!SYNC_URL) {
+        console.log('ℹ️  Auto-sync disabled. Set EXCEL_SYNC_URL to enable.');
         return;
     }
 
@@ -192,5 +176,5 @@ export function setupAutoSync(db) {
         syncDataFromExcel(db);
     }, intervalMs);
 
-    console.log(`🔄 Auto-sync enabled: Checking every ${SYNC_INTERVAL_MINUTES} minutes`);
+    console.log(`🔄 Auto-sync enabled: Every ${SYNC_INTERVAL_MINUTES} minutes`);
 }
