@@ -167,7 +167,7 @@ app.get('/api/candidates/statuses', (req, res) => {
 });
 
 // Analytics Data
-app.get('/analytics', (req, res) => {
+app.get('/api/analytics', (req, res) => {
     try {
         // Status Distribution - Calculate based on end_date
         const statusData = db.prepare(`
