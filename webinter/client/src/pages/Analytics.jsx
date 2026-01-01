@@ -105,14 +105,21 @@ export default function Analytics() {
     const totalCandidates = analyticsData.statusDistribution.reduce((sum, item) => sum + item.count, 0);
     const activeInterns = analyticsData.statusDistribution.find(s => s.status === 'Active')?.count || 0;
     const completedInterns = analyticsData.statusDistribution.find(s => s.status === 'Completed')?.count || 0;
-    const completionRate = totalCandidates > 0 ? ((completedInterns / totalCandidates) * 100).toFixed(1) : 0;
+    const disconnectedInterns = analyticsData.statusDistribution.find(s => s.status === 'Disconnected')?.count || 0;
     const topDepartment = analyticsData.departmentBreakdown[0]?.department || 'N/A';
+    const topDeptCount = analyticsData.departmentBreakdown[0]?.count || 0;
+    const topCollege = analyticsData.collegeDistribution[0]?.college || 'N/A';
+    const topCollegeCount = analyticsData.collegeDistribution[0]?.count || 0;
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 1-12
     const thisYearCount = analyticsData.yearlyTrends.find(y => y.year === currentYear.toString())?.count || 0;
+
+    // Calculate this month (approximate from yearly data)
+    const thisMonthCount = Math.round(thisYearCount / 12); // Simplified estimate
 
     // Chart configurations
     const statusChartData = {
-        labels: analyticsData.statusDistribution.map(d => d.status),
+        labels: analyticsData.statusDistribution.map(d => `${d.status} (${d.count})`),
         datasets: [{
             data: analyticsData.statusDistribution.map(d => d.count),
             backgroundColor: [
@@ -203,6 +210,14 @@ export default function Analytics() {
                 borderWidth: 1,
                 padding: 12,
                 displayColors: true,
+                callbacks: {
+                    label: function (context) {
+                        const label = analyticsData.statusDistribution[context.dataIndex].status;
+                        const value = context.parsed;
+                        const percentage = ((value / totalCandidates) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
             }
         },
         cutout: '70%',
@@ -284,10 +299,10 @@ export default function Analytics() {
                 <p style={{ color: 'var(--text-muted)' }}>Comprehensive analytics and insights • Click charts to drill down</p>
             </div>
 
-            {/* KPI Cards */}
+            {/* KPI Cards - 8 Cards */}
             <div className="kpi-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '1rem',
                 marginBottom: '2rem'
             }}>
@@ -312,7 +327,7 @@ export default function Analytics() {
                 </div>
 
                 {/* Active Interns */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('status', 'Active')}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
                             background: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
@@ -331,28 +346,48 @@ export default function Analytics() {
                     </div>
                 </div>
 
-                {/* Completion Rate */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                {/* Completed */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('status', 'Completed')}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+                            background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
                             borderRadius: '12px',
                             padding: '0.75rem',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}>
-                            <span style={{ fontSize: '1.5rem' }}>🎯</span>
+                            <span style={{ fontSize: '1.5rem' }}>🎓</span>
                         </div>
                         <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{completionRate}%</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Completion Rate</div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{completedInterns}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Completed</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Disconnected */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('status', 'Disconnected')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>❌</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{disconnectedInterns}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Disconnected</div>
                         </div>
                     </div>
                 </div>
 
                 {/* This Year */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('year', currentYear.toString())}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
                             background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
@@ -366,16 +401,36 @@ export default function Analytics() {
                         </div>
                         <div>
                             <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{thisYearCount}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>This Year ({currentYear})</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Year {currentYear}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* This Month */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>📆</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{thisMonthCount}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Avg/Month</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Top Department */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('department', topDepartment)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                            background: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                            background: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
                             borderRadius: '12px',
                             padding: '0.75rem',
                             display: 'flex',
@@ -384,16 +439,36 @@ export default function Analytics() {
                         }}>
                             <span style={{ fontSize: '1.5rem' }}>🏆</span>
                         </div>
-                        <div style={{ overflow: 'hidden' }}>
-                            <div style={{ fontSize: '1.25rem', fontWeight: 700, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topDepartment}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Top Department</div>
+                        <div style={{ overflow: 'hidden', flex: 1 }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topDepartment}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Top Dept ({topDeptCount})</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Top College */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('college', topCollege)}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>🎓</span>
+                        </div>
+                        <div style={{ overflow: 'hidden', flex: 1 }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topCollege}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Top College ({topCollegeCount})</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Charts Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
 
                 {/* Status Distribution */}
                 {analyticsData.statusDistribution.length > 0 && (
