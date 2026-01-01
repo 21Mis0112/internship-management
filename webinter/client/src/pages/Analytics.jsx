@@ -11,8 +11,9 @@ import {
     Title,
     Tooltip,
     Legend,
+    Filler,
 } from 'chart.js';
-import { Pie, Bar, Line } from 'react-chartjs-2';
+import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import api from '../api';
 
 // Register Chart.js components
@@ -25,7 +26,8 @@ ChartJS.register(
     ArcElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    Filler
 );
 
 export default function Analytics() {
@@ -75,7 +77,7 @@ export default function Analytics() {
     if (loading) {
         return (
             <div style={{ textAlign: 'center', padding: '3rem' }}>
-                <div style={{ fontSize: '1.25rem', color: 'var(--text-muted)' }}>Loading analytics...</div>
+                <div style={{ fontSize: '1.25rem', color: 'var(--text-muted)' }}>Loading dashboard...</div>
             </div>
         );
     }
@@ -99,11 +101,19 @@ export default function Analytics() {
         );
     }
 
-    // Chart data with click handlers
+    // Calculate KPIs
+    const totalCandidates = analyticsData.statusDistribution.reduce((sum, item) => sum + item.count, 0);
+    const activeInterns = analyticsData.statusDistribution.find(s => s.status === 'Active')?.count || 0;
+    const completedInterns = analyticsData.statusDistribution.find(s => s.status === 'Completed')?.count || 0;
+    const completionRate = totalCandidates > 0 ? ((completedInterns / totalCandidates) * 100).toFixed(1) : 0;
+    const topDepartment = analyticsData.departmentBreakdown[0]?.department || 'N/A';
+    const currentYear = new Date().getFullYear();
+    const thisYearCount = analyticsData.yearlyTrends.find(y => y.year === currentYear.toString())?.count || 0;
+
+    // Chart configurations
     const statusChartData = {
         labels: analyticsData.statusDistribution.map(d => d.status),
         datasets: [{
-            label: 'Candidates',
             data: analyticsData.statusDistribution.map(d => d.count),
             backgroundColor: [
                 'rgba(34, 197, 94, 0.8)',
@@ -124,114 +134,115 @@ export default function Analytics() {
     };
 
     const deptChartData = {
-        labels: analyticsData.departmentBreakdown.map(d => d.department),
+        labels: analyticsData.departmentBreakdown.slice(0, 10).map(d => d.department),
         datasets: [{
-            label: 'Candidates per Department',
-            data: analyticsData.departmentBreakdown.map(d => d.count),
-            backgroundColor: 'rgba(168, 85, 247, 0.8)',
-            borderColor: 'rgba(168, 85, 247, 1)',
+            label: 'Candidates',
+            data: analyticsData.departmentBreakdown.slice(0, 10).map(d => d.count),
+            backgroundColor: 'rgba(30, 64, 175, 0.8)',
+            borderColor: 'rgba(30, 64, 175, 1)',
             borderWidth: 2,
+            borderRadius: 6,
         }]
     };
 
     const yearChartData = {
         labels: analyticsData.yearlyTrends.map(d => d.year),
         datasets: [{
-            label: 'Candidates per Year',
+            label: 'Candidates',
             data: analyticsData.yearlyTrends.map(d => d.count),
-            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-            borderColor: 'rgba(59, 130, 246, 1)',
-            borderWidth: 2,
+            backgroundColor: 'rgba(96, 165, 250, 0.2)',
+            borderColor: 'rgba(96, 165, 250, 1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: 'rgba(96, 165, 250, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
         }]
     };
 
     const collegeChartData = {
-        labels: analyticsData.collegeDistribution.map(d => d.college),
+        labels: analyticsData.collegeDistribution.slice(0, 10).map(d => d.college),
         datasets: [{
             label: 'Candidates',
-            data: analyticsData.collegeDistribution.map(d => d.count),
-            backgroundColor: [
-                'rgba(251, 191, 36, 0.8)',
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(239, 68, 68, 0.8)',
-                'rgba(168, 85, 247, 0.8)',
-                'rgba(236, 72, 153, 0.8)',
-                'rgba(20, 184, 166, 0.8)',
-                'rgba(249, 115, 22, 0.8)',
-                'rgba(99, 102, 241, 0.8)',
-                'rgba(14, 165, 233, 0.8)',
-            ],
-            borderColor: [
-                'rgba(251, 191, 36, 1)',
-                'rgba(34, 197, 94, 1)',
-                'rgba(59, 130, 246, 1)',
-                'rgba(239, 68, 68, 1)',
-                'rgba(168, 85, 247, 1)',
-                'rgba(236, 72, 153, 1)',
-                'rgba(20, 184, 166, 1)',
-                'rgba(249, 115, 22, 1)',
-                'rgba(99, 102, 241, 1)',
-                'rgba(14, 165, 233, 1)',
-            ],
+            data: analyticsData.collegeDistribution.slice(0, 10).map(d => d.count),
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            borderColor: 'rgba(34, 197, 94, 1)',
             borderWidth: 2,
+            borderRadius: 6,
         }]
     };
 
-    // Chart options with onClick
-    const chartOptions = {
+    // Chart options
+    const doughnutOptions = {
         responsive: true,
         maintainAspectRatio: true,
-        plugins: {
-            legend: { position: 'bottom', labels: { color: '#e5e7eb', font: { size: 12 } } },
-            title: { display: false },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                const value = analyticsData.statusDistribution[index].status;
+                handleChartClick('status', value);
+            }
         },
-        scales: {
-            y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-            x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-        }
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: '#cbd5e1',
+                    font: { size: 12 },
+                    padding: 15,
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleColor: '#fff',
+                bodyColor: '#cbd5e1',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 1,
+                padding: 12,
+                displayColors: true,
+            }
+        },
+        cutout: '70%',
     };
 
-    const barOptionsWithClick = (filterType) => ({
+    const barOptions = (filterType, dataArray) => ({
         responsive: true,
         maintainAspectRatio: true,
+        indexAxis: 'y',
         onClick: (event, elements) => {
             if (elements.length > 0) {
                 const index = elements[0].index;
-                const value = filterType === 'department'
-                    ? analyticsData.departmentBreakdown[index].department
-                    : analyticsData.collegeDistribution[index].college;
+                const value = dataArray[index][filterType];
                 handleChartClick(filterType, value);
             }
         },
         plugins: {
-            legend: { position: 'bottom', labels: { color: '#e5e7eb', font: { size: 12 } } },
-            title: { display: false },
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleColor: '#fff',
+                bodyColor: '#cbd5e1',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 1,
+                padding: 12,
+            }
         },
         scales: {
-            y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-            x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+            y: {
+                ticks: { color: '#9ca3af', font: { size: 11 } },
+                grid: { display: false }
+            },
+            x: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
         }
     });
 
-    const pieOptionsWithClick = (filterType) => ({
-        responsive: true,
-        maintainAspectRatio: true,
-        onClick: (event, elements) => {
-            if (elements.length > 0) {
-                const index = elements[0].index;
-                const value = filterType === 'status'
-                    ? analyticsData.statusDistribution[index].status
-                    : analyticsData.collegeDistribution[index].college;
-                handleChartClick(filterType, value);
-            }
-        },
-        plugins: {
-            legend: { position: 'bottom', labels: { color: '#e5e7eb', font: { size: 12 } } },
-        }
-    });
-
-    const yearOptionsWithClick = {
+    const lineOptions = {
         responsive: true,
         maintainAspectRatio: true,
         onClick: (event, elements) => {
@@ -242,63 +253,206 @@ export default function Analytics() {
             }
         },
         plugins: {
-            legend: { position: 'bottom', labels: { color: '#e5e7eb', font: { size: 12 } } },
-            title: { display: false },
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleColor: '#fff',
+                bodyColor: '#cbd5e1',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 1,
+                padding: 12,
+            }
         },
         scales: {
-            y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-            x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
+            x: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
         }
     };
 
-
     return (
-        <div>
+        <div className="animate-fade-in">
+            {/* Header */}
             <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 600, marginBottom: '0.5rem' }}>Analytics Dashboard</h1>
-                <p style={{ color: 'var(--text-muted)' }}>Click on any chart segment to see candidates</p>
+                <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>📊 Master Dashboard</h1>
+                <p style={{ color: 'var(--text-muted)' }}>Comprehensive analytics and insights • Click charts to drill down</p>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="kpi-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1rem',
+                marginBottom: '2rem'
+            }}>
+                {/* Total Candidates */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>👥</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{totalCandidates}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Total Candidates</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Active Interns */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>✅</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{activeInterns}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Active Interns</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Completion Rate */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>🎯</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{completionRate}%</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Completion Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* This Year */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>📅</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{thisYearCount}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>This Year ({currentYear})</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Top Department */}
+                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>🏆</span>
+                        </div>
+                        <div style={{ overflow: 'hidden' }}>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topDepartment}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Top Department</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Charts Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
 
                 {/* Status Distribution */}
                 {analyticsData.statusDistribution.length > 0 && (
-                    <div className="glass-panel" style={{ cursor: 'pointer' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>📊 Status Distribution</h3>
-                        <div style={{ height: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                            <Pie data={statusChartData} options={pieOptionsWithClick('status')} />
+                    <div className="glass-panel" style={{ cursor: 'pointer', position: 'relative' }}>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem' }}>Status Distribution</h3>
+                        <div style={{ height: '350px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                            <Doughnut data={statusChartData} options={doughnutOptions} />
+                            <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                textAlign: 'center',
+                                pointerEvents: 'none'
+                            }}>
+                                <div style={{ fontSize: '2rem', fontWeight: 700 }}>{totalCandidates}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total</div>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Department Breakdown */}
+                {/* Top Departments */}
                 {analyticsData.departmentBreakdown.length > 0 && (
                     <div className="glass-panel" style={{ cursor: 'pointer' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>📊 Top Departments</h3>
-                        <div style={{ height: '300px' }}>
-                            <Bar data={deptChartData} options={barOptionsWithClick('department')} />
-                        </div>
-                    </div>
-                )}
-
-                {/* Yearly Trends - Bar Chart */}
-                {analyticsData.yearlyTrends.length > 0 && (
-                    <div className="glass-panel" style={{ cursor: 'pointer' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>📊 Candidates by Year</h3>
-                        <div style={{ height: '300px' }}>
-                            <Bar data={yearChartData} options={yearOptionsWithClick} />
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem' }}>Top 10 Departments</h3>
+                        <div style={{ height: '350px' }}>
+                            <Bar data={deptChartData} options={barOptions('department', analyticsData.departmentBreakdown.slice(0, 10))} />
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* Yearly Trends - Full Width */}
+            {analyticsData.yearlyTrends.length > 0 && (
+                <div className="glass-panel" style={{ marginBottom: '1.5rem', cursor: 'pointer' }}>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem' }}>Yearly Growth Trend</h3>
+                    <div style={{ height: '300px' }}>
+                        <Line data={yearChartData} options={lineOptions} />
+                    </div>
+                </div>
+            )}
+
+            {/* Top Colleges */}
+            {analyticsData.collegeDistribution.length > 0 && (
+                <div className="glass-panel" style={{ marginBottom: '1.5rem', cursor: 'pointer' }}>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem' }}>Top 10 Colleges</h3>
+                    <div style={{ height: '350px' }}>
+                        <Bar data={collegeChartData} options={barOptions('college', analyticsData.collegeDistribution.slice(0, 10))} />
+                    </div>
+                </div>
+            )}
 
             {/* Drill-Down Results */}
             {drillDownData && (
                 <div className="glass-panel animate-fade-in" style={{ marginTop: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Candidates - {drillDownType} ({drillDownData.length})</h2>
-                        <button className="btn btn-secondary" onClick={clearDrillDown}>✕ Clear</button>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Filtered Candidates - {drillDownType} ({drillDownData.length})</h2>
+                        <button className="btn btn-secondary" onClick={clearDrillDown}>✕ Clear Filter</button>
                     </div>
                     <div style={{ overflowX: 'auto' }}>
                         <table className="data-table">
@@ -309,6 +463,7 @@ export default function Analytics() {
                                     <th>Email</th>
                                     <th>College</th>
                                     <th>Department</th>
+                                    <th>Year</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -321,6 +476,7 @@ export default function Analytics() {
                                         <td>{candidate.email}</td>
                                         <td>{candidate.college || '-'}</td>
                                         <td>{candidate.department || '-'}</td>
+                                        <td>{candidate.year || '-'}</td>
                                         <td>
                                             <span className={`badge ${candidate.status === 'Active' ? 'badge-green' :
                                                 candidate.status === 'Completed' ? 'badge-blue' : 'badge-red'}`}>
