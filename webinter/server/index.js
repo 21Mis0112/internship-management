@@ -248,7 +248,21 @@ app.get('/api/analytics', (req, res) => {
 // Candidates List
 app.get('/api/candidates', (req, res) => {
     const { status, college, search, year, department } = req.query;
-    let query = 'SELECT * FROM candidates WHERE 1=1';
+
+    // Build the query with calculated status
+    let query = `
+        SELECT * FROM (
+            SELECT 
+                id, intern_id, name, college, department, year, start_date, end_date,
+                phone, email, mentor, referred_by, qualification, created_at, source,
+                CASE
+                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'Completed'
+                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'Active'
+                    ELSE status
+                END as status
+            FROM candidates
+        ) WHERE 1=1
+    `;
     const params = [];
 
     if (status) {
