@@ -171,15 +171,21 @@ app.get('/api/analytics', (req, res) => {
     try {
         // Status Distribution - Calculate based on end_date
         const statusData = db.prepare(`
-            SELECT
-                CASE
-                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'COMPLETED'
-                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'ACTIVE'
-                    ELSE UPPER(status)
-                END as status,
-                COUNT(*) as count
-            FROM candidates
-            GROUP BY status
+            SELECT 
+                calculated_status as status,
+                SUM(count) as count
+            FROM (
+                SELECT
+                    CASE
+                        WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'Completed'
+                        WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'Active'
+                        ELSE status
+                    END as calculated_status,
+                    COUNT(*) as count
+                FROM candidates
+                GROUP BY calculated_status
+            )
+            GROUP BY calculated_status
             ORDER BY count DESC
         `).all();
 
