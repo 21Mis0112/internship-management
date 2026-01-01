@@ -157,9 +157,21 @@ app.post('/api/auth/update-password', (req, res) => {
 });
 
 // Get Distinct Statuses
+// Get distinct statuses for filtering
 app.get('/api/candidates/statuses', (req, res) => {
     try {
-        const statuses = db.prepare('SELECT DISTINCT status FROM candidates WHERE status IS NOT NULL ORDER BY status').all();
+        // Get normalized statuses that match what we return in queries
+        const statuses = db.prepare(`
+            SELECT DISTINCT 
+                CASE
+                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'Completed'
+                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'Active'
+                    ELSE UPPER(SUBSTR(status, 1, 1)) || LOWER(SUBSTR(status, 2))
+                END as status
+            FROM candidates 
+            WHERE status IS NOT NULL 
+            ORDER BY status
+        `).all();
         res.json(statuses.map(s => s.status));
     } catch (err) {
         res.status(500).json({ error: err.message });
