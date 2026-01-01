@@ -247,7 +247,7 @@ app.get('/api/analytics', (req, res) => {
 
 // Candidates List
 app.get('/api/candidates', (req, res) => {
-    const { status, college, search, year, department } = req.query;
+    const { status, college, search, year, department, month, startYear, endYear, startDate, endDate } = req.query;
 
     // Build the query with calculated status
     let query = `
@@ -272,6 +272,26 @@ app.get('/api/candidates', (req, res) => {
     if (year) {
         query += ' AND start_date LIKE ?';
         params.push(`${year}%`);
+    }
+    if (month) {
+        query += ' AND SUBSTR(start_date, 6, 2) = ?';
+        params.push(month);
+    }
+    if (startYear) {
+        query += ' AND CAST(SUBSTR(start_date, 1, 4) AS INTEGER) >= ?';
+        params.push(parseInt(startYear));
+    }
+    if (endYear) {
+        query += ' AND CAST(SUBSTR(start_date, 1, 4) AS INTEGER) <= ?';
+        params.push(parseInt(endYear));
+    }
+    if (startDate) {
+        query += ' AND DATE(start_date) >= DATE(?)';
+        params.push(startDate);
+    }
+    if (endDate) {
+        query += ' AND DATE(start_date) <= DATE(?)';
+        params.push(endDate);
     }
     if (college) {
         query += ' AND college LIKE ?';

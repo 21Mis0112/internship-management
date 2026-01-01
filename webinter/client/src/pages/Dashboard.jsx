@@ -11,6 +11,11 @@ export default function Dashboard() {
         college: '',
         department: '',
         year: '',
+        month: '',
+        startYear: '',
+        endYear: '',
+        startDate: '',
+        endDate: '',
         search: '', // Matches name, email, or intern_id
     });
     const navigate = useNavigate();
@@ -40,12 +45,17 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         try {
-            const { status, college, department, search, year } = filters;
+            const { status, college, department, search, year, month, startYear, endYear, startDate, endDate } = filters;
             const params = new URLSearchParams();
             if (status) params.append('status', status);
             if (college) params.append('college', college);
             if (department) params.append('department', department);
             if (year) params.append('year', year);
+            if (month) params.append('month', month);
+            if (startYear) params.append('startYear', startYear);
+            if (endYear) params.append('endYear', endYear);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
             if (search) params.append('search', search);
 
             const res = await api.get(`/candidates?${params.toString()}`);
@@ -91,7 +101,18 @@ export default function Dashboard() {
 
             {/* Filters */}
             <div className="glass-panel" style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>Filters</h3>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setFilters({ status: '', college: '', department: '', year: '', month: '', startYear: '', endYear: '', startDate: '', endDate: '', search: '' })}
+                        style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                    >
+                        Clear All
+                    </button>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    {/* Row 1: Search, Status, College */}
                     <div>
                         <label className="label">Search</label>
                         <input
@@ -123,6 +144,8 @@ export default function Dashboard() {
                             onChange={(e) => setFilters({ ...filters, college: e.target.value })}
                         />
                     </div>
+
+                    {/* Row 2: Department, Month, Year */}
                     <div>
                         <label className="label">Department</label>
                         <input
@@ -133,12 +156,76 @@ export default function Dashboard() {
                         />
                     </div>
                     <div>
-                        <label className="label">Year</label>
+                        <label className="label">Month</label>
+                        <select
+                            className="input"
+                            value={filters.month}
+                            onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+                        >
+                            <option value="">All Months</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="label">Single Year</label>
                         <input
                             className="input"
                             placeholder="Start Year (YYYY)"
                             value={filters.year}
                             onChange={(e) => setFilters({ ...filters, year: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Row 3: Start Year, End Year, Start Date */}
+                    <div>
+                        <label className="label">Start Year (Range)</label>
+                        <input
+                            className="input"
+                            type="number"
+                            placeholder="From Year (2020)"
+                            value={filters.startYear}
+                            onChange={(e) => setFilters({ ...filters, startYear: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="label">End Year (Range)</label>
+                        <input
+                            className="input"
+                            type="number"
+                            placeholder="To Year (2024)"
+                            value={filters.endYear}
+                            onChange={(e) => setFilters({ ...filters, endYear: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="label">Start Date From</label>
+                        <input
+                            className="input"
+                            type="date"
+                            value={filters.startDate}
+                            onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Row 4: End Date */}
+                    <div>
+                        <label className="label">Start Date To</label>
+                        <input
+                            className="input"
+                            type="date"
+                            value={filters.endDate}
+                            onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                         />
                     </div>
                 </div>
