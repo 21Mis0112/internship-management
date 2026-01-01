@@ -299,11 +299,11 @@ export default function Analytics() {
                 <p style={{ color: 'var(--text-muted)' }}>Comprehensive analytics and insights • Click charts to drill down</p>
             </div>
 
-            {/* KPI Cards - 8 Cards */}
+            {/* KPI Cards - 4 Essential Cards */}
             <div className="kpi-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '1rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '1.5rem',
                 marginBottom: '2rem'
             }}>
                 {/* Total Candidates */}
@@ -315,13 +315,15 @@ export default function Analytics() {
                             padding: '0.75rem',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            minWidth: '50px',
+                            minHeight: '50px'
                         }}>
                             <span style={{ fontSize: '1.5rem' }}>👥</span>
                         </div>
                         <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{totalCandidates}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Total Candidates</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1 }}>{totalCandidates}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Total Candidates</div>
                         </div>
                     </div>
                 </div>
@@ -335,13 +337,15 @@ export default function Analytics() {
                             padding: '0.75rem',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            minWidth: '50px',
+                            minHeight: '50px'
                         }}>
                             <span style={{ fontSize: '1.5rem' }}>✅</span>
                         </div>
                         <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{activeInterns}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Active Interns</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1 }}>{activeInterns}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Active Interns</div>
                         </div>
                     </div>
                 </div>
@@ -350,18 +354,20 @@ export default function Analytics() {
                 <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('status', 'Completed')}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                            background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+                            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
                             borderRadius: '12px',
                             padding: '0.75rem',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            minWidth: '50px',
+                            minHeight: '50px'
                         }}>
                             <span style={{ fontSize: '1.5rem' }}>🎓</span>
                         </div>
                         <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{completedInterns}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Completed</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1 }}>{completedInterns}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Completed</div>
                         </div>
                     </div>
                 </div>
@@ -375,93 +381,15 @@ export default function Analytics() {
                             padding: '0.75rem',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            minWidth: '50px',
+                            minHeight: '50px'
                         }}>
                             <span style={{ fontSize: '1.5rem' }}>❌</span>
                         </div>
                         <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{disconnectedInterns}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Disconnected</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* This Year */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('year', currentYear.toString())}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                            borderRadius: '12px',
-                            padding: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <span style={{ fontSize: '1.5rem' }}>📅</span>
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{thisYearCount}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Year {currentYear}</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* This Month */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'default' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
-                            borderRadius: '12px',
-                            padding: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <span style={{ fontSize: '1.5rem' }}>📆</span>
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{thisMonthCount}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Avg/Month</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Top Department */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('department', topDepartment)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            background: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
-                            borderRadius: '12px',
-                            padding: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <span style={{ fontSize: '1.5rem' }}>🏆</span>
-                        </div>
-                        <div style={{ overflow: 'hidden', flex: 1 }}>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topDepartment}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Top Dept ({topDeptCount})</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Top College */}
-                <div className="kpi-card glass-panel" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => handleChartClick('college', topCollege)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
-                            borderRadius: '12px',
-                            padding: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <span style={{ fontSize: '1.5rem' }}>🎓</span>
-                        </div>
-                        <div style={{ overflow: 'hidden', flex: 1 }}>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topCollege}</div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Top College ({topCollegeCount})</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1 }}>{disconnectedInterns}</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Disconnected</div>
                         </div>
                     </div>
                 </div>
