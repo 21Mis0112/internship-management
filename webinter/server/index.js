@@ -167,14 +167,20 @@ app.get('/api/candidates/statuses', (req, res) => {
 });
 
 // Analytics Data
-app.get('/api/analytics', (req, res) => {
+app.get('/analytics', (req, res) => {
     try {
-        // Status Distribution
+        // Status Distribution - Calculate based on end_date
         const statusData = db.prepare(`
-            SELECT status, COUNT(*) as count 
-            FROM candidates 
-            WHERE status IS NOT NULL 
+            SELECT
+                CASE
+                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'COMPLETED'
+                    WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'ACTIVE'
+                    ELSE UPPER(status)
+                END as status,
+                COUNT(*) as count
+            FROM candidates
             GROUP BY status
+            ORDER BY count DESC
         `).all();
 
         // Yearly Distribution (from start_date)
