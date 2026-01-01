@@ -103,9 +103,9 @@ export default function Analytics() {
 
     // Calculate KPIs
     const totalCandidates = analyticsData.statusDistribution.reduce((sum, item) => sum + item.count, 0);
-    const activeInterns = analyticsData.statusDistribution.find(s => s.status === 'Active')?.count || 0;
-    const completedInterns = analyticsData.statusDistribution.find(s => s.status === 'Completed')?.count || 0;
-    const disconnectedInterns = analyticsData.statusDistribution.find(s => s.status === 'Disconnected')?.count || 0;
+    const activeInterns = analyticsData.statusDistribution.find(s => s.status?.toLowerCase() === 'active')?.count || 0;
+    const completedInterns = analyticsData.statusDistribution.find(s => s.status?.toLowerCase() === 'completed')?.count || 0;
+    const disconnectedInterns = analyticsData.statusDistribution.find(s => s.status?.toLowerCase() === 'disconnected')?.count || 0;
     const topDepartment = analyticsData.departmentBreakdown[0]?.department || 'N/A';
     const topDeptCount = analyticsData.departmentBreakdown[0]?.count || 0;
     const topCollege = analyticsData.collegeDistribution[0]?.college || 'N/A';
