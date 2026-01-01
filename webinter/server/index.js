@@ -179,7 +179,7 @@ app.get('/api/analytics', (req, res) => {
                     CASE
                         WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'Completed'
                         WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'Active'
-                        ELSE status
+                        ELSE UPPER(SUBSTR(status, 1, 1)) || LOWER(SUBSTR(status, 2))
                     END as calculated_status,
                     COUNT(*) as count
                 FROM candidates
@@ -258,7 +258,7 @@ app.get('/api/candidates', (req, res) => {
                 CASE
                     WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) < DATE('now') THEN 'Completed'
                     WHEN end_date IS NOT NULL AND end_date != '' AND DATE(end_date) >= DATE('now') THEN 'Active'
-                    ELSE status
+                    ELSE UPPER(SUBSTR(status, 1, 1)) || LOWER(SUBSTR(status, 2))
                 END as status
             FROM candidates
         ) WHERE 1=1
